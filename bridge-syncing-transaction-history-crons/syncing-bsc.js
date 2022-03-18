@@ -8,7 +8,7 @@ const Web3 = require("web3");
 var DB_CONFIG = {
 		host: "localhost",
 		user: "root",
-		password: "",
+		password: "Admin@1234",
 		database: "test",
 		connectTimeout: 100000,
 		port: 3306
@@ -57,7 +57,7 @@ async function execute(){
 	
 		var currentBlock = await web3.eth.getBlockNumber();
 		currentBlock = currentBlock-5;	//we will go 5 blocks in the past, just for safe side
-		
+		//currentBlock = 14876849;
 
 
 		try{
@@ -82,9 +82,9 @@ async function execute(){
 				var lastBlockDatabase=currentBlock-5000;	
 				
 				
-				//await getEventData_CoinIn(lastBlockDatabase, currentBlock);	 
-				//await getEventData_TokenIn(lastBlockDatabase, currentBlock);
-				//await getEventData_CoinOut((lastBlockDatabase-20), (currentBlock-20));	//additional 20 blocks past, for coin out
+				await getEventData_CoinIn(lastBlockDatabase, currentBlock);	 
+				await getEventData_TokenIn(lastBlockDatabase, currentBlock);
+				await getEventData_CoinOut((lastBlockDatabase-20), (currentBlock-20));	//additional 20 blocks past, for coin out
 				await getEventData_TokenOut((lastBlockDatabase-20), (currentBlock-20));	//additional 20 blocks past, for token out
 				
 
@@ -123,12 +123,14 @@ async function getEventData_CoinIn(_fromBlock, _toBlock){
 		 					var _orderid = eve.returnValues.orderID;							
 							var _userWallet = eve.returnValues.user;
 							var _amount = eve.returnValues.value;  
+							var _toTxnHash = '';
+							var _toAmount = 0.0;
 							
 														
 							if(parseInt(_amount)){							
 								try{
 									
-									var insert_query = "INSERT INTO bridge_transactions (`userWallet`,`orderID`,`fromChain`,`fromCurrency`,`fromTxnHash`,`fromAmount`,`toChain`,`toCurrency`) VALUES ('"+_userWallet+"',"+_orderid+","+BSC_CHAIN_ID+",'"+DEFAULT_COIN+"','"+_txnHash+"',"+_amount+","+DTH_CHAIN_ID+",'"+DEFAULT_COIN+"')";		
+									var insert_query = "INSERT INTO bridge_transactions (`userWallet`,`orderID`,`fromChain`,`fromCurrency`,`fromTxnHash`,`fromAmount`,`toChain`,`toCurrency`,`toTxnHash`,`toAmount`) VALUES ('"+_userWallet+"',"+_orderid+","+BSC_CHAIN_ID+",'"+DEFAULT_COIN+"','"+_txnHash+"',"+_amount+","+DTH_CHAIN_ID+",'"+DEFAULT_COIN+"','"+_toTxnHash+"','"+_toAmount+"')";		
 									console.log(">>> Inserting record, orderid, transactionHash >>>",_orderid, _txnHash);
 									await db_query(insert_query).catch(console.log);
 										
@@ -168,12 +170,13 @@ async function getEventData_TokenIn(_fromBlock, _toBlock){
 		 					var _orderid = eve.returnValues.orderID;							
 							var _userWallet = eve.returnValues.user;
 							var _amount = eve.returnValues.value;  
-							
+							var _toTxnHash = '';
+							var _toAmount = 0.0;
 														
 							if(parseInt(_amount)){							
 								try{
 									
-									var insert_query = "INSERT INTO bridge_transactions (`userWallet`,`orderID`,`fromChain`,`fromCurrency`,`fromTxnHash`,`fromAmount`,`toChain`,`toCurrency`) VALUES ('"+_userWallet+"',"+_orderid+","+BSC_CHAIN_ID+",'"+FROM_TOKEN+"','"+_txnHash+"',"+_amount+","+DTH_CHAIN_ID+",'"+TO_TOKEN+"')";		
+									var insert_query = "INSERT INTO bridge_transactions (`userWallet`,`orderID`,`fromChain`,`fromCurrency`,`fromTxnHash`,`fromAmount`,`toChain`,`toCurrency`,`toTxnHash`,`toAmount`) VALUES ('"+_userWallet+"',"+_orderid+","+BSC_CHAIN_ID+",'"+FROM_TOKEN+"','"+_txnHash+"',"+_amount+","+DTH_CHAIN_ID+",'"+TO_TOKEN+"','"+_toTxnHash+"','"+_toAmount+"')";		
 									console.log(">>> Inserting record, orderid, transactionHash >>>",_orderid, _txnHash);
 									await db_query(insert_query).catch(console.log);
 										
