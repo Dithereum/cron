@@ -30,7 +30,7 @@ const options = {
 	},
 };
 
-var TRON_CHAIN_ID = 9999;	// chain ID 56 is for the TRON SHASTANET 
+var TRON_CHAIN_ID = 9999;	// chain ID 
 var DTH_CHAIN_ID = 34;	// chain ID 34 is for the Dithereum TESTNET
 var DEFAULT_COIN = "TRX";
 var FROM_TOKEN = "TRX";
