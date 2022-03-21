@@ -30,7 +30,7 @@ const options = {
 	},
 };
 
-var TRON_CHAIN_ID = 9999;	// chain ID 
+var TRON_CHAIN_ID = 9999;	  
 var DTH_CHAIN_ID = 34;	// chain ID 34 is for the Dithereum TESTNET
 var DEFAULT_COIN = "TRX";
 var FROM_TOKEN = "TRX";
@@ -98,7 +98,7 @@ async function getEventTRX_CoinIn(_fromBlock, _toBlock){
 					
 						if(parseInt(_amount)){							
 							try{							
-								var select_query = "SELECT count(*) cnt from bridge_transactions where `fromTxnHash`='"+_txnHash.toString()+"'";							
+								var select_query = "SELECT count(*) as cnt from bridge_transactions where `fromTxnHash`='"+_txnHash.toString()+"'";															
 								var con3 = mysql.createConnection(DB_CONFIG);
 						   	const query3 = util.promisify(con3.query).bind(con3);
 						   	async function x(){	
@@ -106,7 +106,7 @@ async function getEventTRX_CoinIn(_fromBlock, _toBlock){
 								}
 								x().then((record)=>{
 									if(typeof record[0] !== 'undefined'){
-										var cnt = parseInt(record[0].cnt);
+										var cnt = parseInt(record[0].cnt);										
 										if(cnt < 1){																			
 											var insert_query = "INSERT INTO bridge_transactions (`userWallet`,`orderID`,`fromChain`,`fromCurrency`,`fromTxnHash`,`fromAmount`,`toChain`,`toCurrency`,`toTxnHash`,`toAmount`) VALUES ('"+_userWallet+"',"+_orderid+","+TRON_CHAIN_ID+",'"+DEFAULT_COIN+"','"+_txnHash+"',"+_amount+","+DTH_CHAIN_ID+",'"+DEFAULT_COIN+"','"+_toTxnHash+"','"+_toAmount+"')";																							
 											var w = async function y(){							
