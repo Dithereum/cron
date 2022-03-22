@@ -54,7 +54,7 @@ execute();
 async function execute(){		
 		var currentBlock = await web3.eth.getBlockNumber();
 		currentBlock = currentBlock-5;	//we will go 5 blocks in the past, just for safe side
-		currentBlock = '12569500';
+		//currentBlock = '12569500';
 		//currentBlock = '13340558';
 
 		try{
