@@ -10,6 +10,7 @@ var CHAIN = {'chain':'rinkeby'};
 
 var INFURA_PROVIDER = "https://rinkeby.infura.io/v3/8102c6c81e12418588c89d69ac7a3f04";
 var CONTRACT_ADDR = '0xB6495879f4f88D3563B52c097Cb009E286586137';
+const BigNumber = require('bignumber.js');
 
 var DITHEREUM_CONTRACT_ADDR = '0x14B55b5Bfa8D442760Fd3e31678F38eF61cDab87';
 var CONTRACT_ADDR_ABI = JSON.parse(process.env.BRIDGE_ABI);
@@ -54,6 +55,14 @@ CHAINID_URL[4] = 'https://rinkeby.infura.io/v3/8102c6c81e12418588c89d69ac7a3f04'
 CHAINID_URL[34] = 'https://node-testnet.dithereum.io';
 
 
+//// MIN AMOUNT -> BRIDGE UI
+const MIN_ETH =  2500000000000000; 
+const MIN_USDT = 10000000000000000000;
+const MIN_USDC = 10000000000000000000;
+const MIN_DAI = 10000000000000000000;
+const MIN_PAX = 10000000000000000000;
+
+
 // CHANGES DONE
 async function	getAvailableAdminWallet(){	
 	var con5 = mysql.createConnection(DB_CONFIG);
@@ -72,7 +81,7 @@ async function	getAvailableAdminWallet(){
 				console.log(">>>>> NOTE:::::::: No Admin wallet available >>>>");																	
 			}		
 	}catch(e){
-			console.error("ERROR SQL>>Catch",e);
+			console.error(">>>>Error SQL>>Catch",e);
 	}finally{
 			con5.end();			
 	}			
@@ -119,7 +128,7 @@ async function	getAvailableAdminWallet_bridge(bridgeweb3){
 			var select_wallet_query = "SELECT * FROM "+process.env.NONCE_ADMIN_TABLE+" WHERE "+_mywherecondition;
 			console.log(">>>> Bridge Query >>>>", select_wallet_query);			
 			var _adminwallet = await query5(select_wallet_query).catch(console.log);			
-			console.log("<<<< Bridge Available Wallet >>>> ", _adminwallet[0]);			
+			console.log("<<<< Bridge Available Wallet >>>> ", _adminwallet[0].walletid, _adminwallet[0].chainid, _adminwallet[0].nonce);			
 			if(_adminwallet[0]){
 				process.env.ADMIN_WALLET_BRIDGE=_adminwallet[0].walletid;
 				process.env.ADMIN_WALLET_PK_BRIDGE=_adminwallet[0].walletpk;
@@ -231,14 +240,14 @@ async function bridge_sendmethod(_toWallet, _amt, orderid, _chainid){
 						bridgeweb3.eth.accounts.signTransaction(raw_tx, process.env.ADMIN_WALLET_PK_BRIDGE.toString(), function(error,result){
 							if(! error){
 								try{									
-									var serializedTx=result.rawTransaction;
+									var serializedTx=result.rawTransaction;									 
 									bridgeweb3.eth.sendSignedTransaction(serializedTx.toString('hex'))
 									.on('transactionHash',function(xhash){
 										console.log(".....SignedTranscationHash ==> ",xhash);
 									})
 									.on('error', myErr => {
 										console.log("###ERR..",myErr);
-									});
+									});									
 								}catch(e){
 									console.log('<= Error =>',e);
 								}
@@ -253,7 +262,9 @@ async function bridge_sendmethod(_toWallet, _amt, orderid, _chainid){
 	 })();	
 }
 
-async function company_bridge_send_method( _tokenaddr ,_toWallet, _amt, orderid, _chainid){	  
+async function company_bridge_send_method( _tokenaddr ,_toWallet, _amt, orderid, _chainid){	
+	  // ForceSet
+ 	  _chainid = BRIDGE_CHAIN;	  
 	  // not valid token addr
 	  var _ary = [DAI_TOKEN_ADDRESS.toString(), PAX_TOKEN_ADDRESS.toString(), USDC_TOKEN_ADDRESS.toString(), USDT_TOKEN_ADDRESS.toString()];
 	  if(_ary.includes(_tokenaddr)){}else{
@@ -336,7 +347,7 @@ async function company_bridge_send_method( _tokenaddr ,_toWallet, _amt, orderid,
 									console.log(">> Signed Transaction >>");
 									var serializedTx=result.rawTransaction;
 									console.log("Serialized Tx ::", serializedTx);
-								   bridgeweb3.eth.sendSignedTransaction(serializedTx.toString('hex')).on('receipt', console.log);
+								   bridgeweb3.eth.sendSignedTransaction(serializedTx.toString('hex')).on('receipt', console.log).on('error', console.log);
 								}catch(e){
 									console.log(e);
 								}
@@ -379,8 +390,10 @@ async function checkLatestBlock(){
  	 var fromblock = toblock-500;
  	 
  	 // For testing 	  	  
- 	 var toblock=10268897;
- 	 var fromblock=10268894;	
+ 	 //var toblock=10268897;
+ 	 //var fromblock=10268894;
+ 	 var toblock= 10444879;
+ 	 var fromblock= 10441878;   	
  	 console.log(">>TESTING FOR>>toblock>>,fromblock>>",toblock, fromblock); 
 	 getEventData_CoinIn(fromblock, toblock);	 
 	 getEventData_TokenIn(fromblock, toblock); 	
@@ -394,7 +407,8 @@ async function freeze_wallet(){
 			var _wherestr = " walletid='"+process.env.ADMIN_WALLET+"' AND chainid="+process.env.CHAIN_ID; 			
 			var update_query = "UPDATE "+process.env.NONCE_ADMIN_TABLE+" SET isFrozen=1, freezetime=UNIX_TIMESTAMP() WHERE "+_wherestr;
 			console.log(">>>> Query >>>> Update Query >>>>", update_query);		
-			await query8(update_query).catch(console.log);			
+			await query8(update_query).catch(console.log);	
+			console.log("-------------------------------------------------");		
 			checkLatestBlock();		
 	}catch(e){
 			console.error("ERROR SQL>>Catch",e);
@@ -435,7 +449,7 @@ async function getEventData_CoinIn(_fromBlock, _toBlock){
 		    			}	 				
 		 				var eventlen = events.length;
 		 				process.env.CoinInEventLen = events.length;
-		 				console.log("COIN IN >>> eventlen >>>>", eventlen);		 				
+		 				//console.log("COIN IN >>> eventlen >>>>", eventlen);		 				
 		 				var secretText = Math.random(23439, 5654624);	
 		 				process.env.secretText = secretText.toString();	
 		 				for(var i=0;i<eventlen; i++){		
@@ -447,8 +461,8 @@ async function getEventData_CoinIn(_fromBlock, _toBlock){
 							var _amount = eve.returnValues.value;
 							var _chainid = eve.returnValues.chainID ? eve.returnValues.chainID : BRIDGE_CHAIN.toString();
 							//console.log(">>>>eve<<<<",eve.returnValues);  
-							console.log(">>>>>CoinIn >> CHAIN id, Order Id >>>>",_chainid, _orderid);							
-							if(_chainid && (parseInt(_amount))){							
+							console.log(">>>>>CoinIn >> CHAIN id, Order Id >>>>",_chainid, _orderid);						
+							if(_chainid && (! BigNumber(_amount).lt(MIN_ETH))){						
 								try{
 									(async()=>{																		 		
 									   var cnt = await db_select_coinin(_chainid, _orderid, _sendcoinsTo, _amount, secretText).catch(console.log);											      											   
@@ -457,7 +471,7 @@ async function getEventData_CoinIn(_fromBlock, _toBlock){
 									console.log(">>>>>Catch >>>>",e);									
 								}																
 							}else{
-								console.log(">>>> CoinIn >>>>In for loop, _orderid, _chainid,  _amount, i >>>>", _orderid, _chainid, _amount, i);						
+								console.log(">>>> CoinIn/Else >>>>In for loop, _orderid, _chainid,  _amount, i >>>>", _orderid, _chainid, _amount, i);						
 							}														
 						}
 					}catch(e){
@@ -498,7 +512,26 @@ async function getEventData_TokenIn(_fromBlock, _toBlock){
 							var _myamount = myeve.returnValues.value;
 							var _mychainid = myeve.returnValues.chainID;
 							//console.log(">>>>>### TokenIn eventlen, k, 	 id, Order Id >>>>",myeventlen, k, _mychainid, _myorderid);
-							if(_mychainid && (parseInt(_myamount))){
+							/// MIN AMOUNT CHECK CONDITION 
+							var _check = false;														 
+							if((_mytokenAddress === DAI_TOKEN_ADDRESS.toString()) && (! BigNumber(_myamount).lt(MIN_DAI))){								
+								_check = true;
+								console.log(">>>> _check DAI Token >>>", _check);
+							}
+							if((_mytokenAddress === PAX_TOKEN_ADDRESS.toString()) && (! BigNumber(_myamount).lt(MIN_PAX))){
+								_check = true;
+								console.log(">>>> _check PAX Token >>>", _check);
+							}
+							if((_mytokenAddress === USDC_TOKEN_ADDRESS.toString()) && (! BigNumber(_myamount).lt(MIN_USDC))){
+								_check = true;
+								console.log(">>>> _check USDC TOKEN >>>", _check);
+							}
+							if((_mytokenAddress === USDT_TOKEN_ADDRESS.toString()) && (! BigNumber(_myamount).lt(MIN_USDT))){
+								_check = true;
+								console.log(">>>> _check USDT Token >>>", _check);
+							}														
+							///
+							if((_mychainid) && (_check)){
 								console.log("!!!!!! tokenAddress >>>>>", _mytokenAddress);
 								var _ary = [DAI_TOKEN_ADDRESS.toString(), PAX_TOKEN_ADDRESS.toString(), USDC_TOKEN_ADDRESS.toString(), USDT_TOKEN_ADDRESS.toString()];
 								if(_ary.includes(_mytokenAddress)){							 
@@ -515,7 +548,7 @@ async function getEventData_TokenIn(_fromBlock, _toBlock){
 									console.log(">>>> not matched !!");
 								}
 							}else{
-								console.log(">>> TOKENIN >>>> In for loop, _orderid, _chainid,  _amount, i >>>>", _myorderid, _chainid, _amount, i);						
+								console.log(">>> TOKENIN >>>> In for loop, _orderid, _mychainid,  _myamount, k >>>>", _myorderid, _mychainid, _myamount, k);						
 							}							
 						}													 												
 		 		});
@@ -614,9 +647,10 @@ async function unfreezeWallet(_chainid, _walletid){
 	try{	
 			var _wherecond = " walletid='"+_walletid+"' AND chainid IN (34,4,97,137,256,80001) AND freezetime<(UNIX_TIMESTAMP()-600)";
 			var update_query = "UPDATE "+process.env.NONCE_ADMIN_TABLE+" SET isFrozen=0,freezetime=0,nonce=NULL WHERE "+_wherecond;						
-			console.log("------------------------------------------");			
+			console.log("---------------------------------------------------------------");			
 			console.log(">>UNFREEZING...., UPDATE QUERY<<", update_query)			
 			var wallets = await query8(update_query);
+			console.log("---------------------------------------------------------------");
 			return wallets;
 	}catch(e){
 			console.error("ERROR SQL>>Catch",e);
@@ -655,25 +689,25 @@ async function remove_orderid_from_orders_table(mychain){
 
 tryToUnfreezeWallets();
 
-//Every 4 mins
-var job = new CronJob('0 */4 * * * *', function() {
-	console.log("-------------------------------------");
-   console.log('Cron running, every 4 mins');
-   console.log("-------------------------------------");
+//Every 3 mins
+var job = new CronJob('0 */3 * * * *', function() {
+	console.log("-----------------------------------------------------------");
+   console.log('>>> CRON RUNNING every 3 mins, [ Rinkebytest-singlescript ] >>>>');
+   console.log("-----------------------------------------------------------");
    // DONE Changes   
 	getAvailableAdminWallet().then(()=>{
 			console.log(" >>>> ADMIN_WALLET:, >>>> CHAIN_ID:",process.env.ADMIN_WALLET, process.env.CHAIN_ID);				
 			if(process.env.ADMIN_WALLET){
-				console.log("--------------------------------------------");		
+				console.log("--------------------------------------------------");		
 				(async()=>{
-					console.log("============================================");					
+					console.log("===============================================");					
 					await web3.eth.getTransactionCount(process.env.ADMIN_WALLET, "pending").then((z)=>{				
 						process.env.lastnonce = parseInt(z);
 						freeze_wallet();	
 					}).catch(console.log);	
 				})();	
 			}else{
-				console.log(">>> Admin Wallet not available >>>");		
+				console.log(">>> Admin Wallets not available >>>");		
 			}	
 	}).catch(console.log);  
 }, null, true, 'America/Los_Angeles');
