@@ -657,7 +657,8 @@ async function company_bridge_send_method_coinin(_toWallet, _amt, orderid, _chai
             }
             var mydata = '';
             var requiredGas = 0;
-            _amt = _amt / 1000; // JUST FOR TESTING SMALL AMOUNT AS NOT ENOUGH COINS/TOKENS TO TEST			    
+            // UNCOMMENT BELOW LINE FOR TESTING
+            //_amt = _amt / 1000; // JUST FOR TESTING SMALL AMOUNT AS NOT HAVING ENOUGH COINS/TOKENS TO TEST			    
             (async () => {
                 mydata = await company_bridgeinstance.methods.tokenOut(BNB_TOKEN_ADDRESS.toString(), _toWallet.toString(), _amt.toString(), orderid.toString(), _chainid.toString()).encodeABI();
                 requiredGas = await company_bridgeinstance.methods.tokenOut(BNB_TOKEN_ADDRESS, _toWallet, _amt, orderid, _chainid).estimateGas({
@@ -799,7 +800,8 @@ async function company_bridge_send_method(_tokenaddr, _toWallet, _amt, orderid, 
             console.log(">>>>>>!!!!!!!!!!!!!!!!!!!!!!!!~~~~~~~~~~~~~~~~~~~~~~~~", _chainid, JSON.parse(_envobj)['walletid']);
             var mydata = '';
             var requiredGas = 0;
-            _amt = _amt / 1000000; // JUST FOR TESTING SMALL AMOUNT AS NOT ENOUGH COINS/TOKENS TO TEST
+            // UNCOMMENT BELOW LINE FOR TESTING
+            //_amt = _amt / 1000000; // JUST FOR TESTING SMALL AMOUNT AS NOT HAVING ENOUGH COINS/TOKENS TO TEST
 
             if (_tokenaddr === SEARCH_FOR_USDT.toString()) {
                 console.log(">>>>>>@@@@@!~~~~");
