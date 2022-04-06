@@ -12,7 +12,7 @@ process.env.POLYGON_CONTRACT_ORDERS_TABLE = "polygon_contract_orders";
 
 // Polygon Provider
 var PROVIDER = 'https://polygon-rpc.com';
-var CONTRACT_ADDR = '0x75287F2e834c390d9D5A83e9F4b60Ca6B1930c6b';
+var CONTRACT_ADDR = '0x4a6b64361e7b0ff7E97cB9BEbfb396EA9bA5d793';
 
 var CONTRACT_ADDR_ABI = JSON.parse(JSON.stringify(
 [{"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"orderID","type":"uint256"},{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"CoinIn","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"orderID","type":"uint256"},{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"CoinOut","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"orderID","type":"uint256"},{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"CoinOutFailed","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"_from","type":"address"},{"indexed":true,"internalType":"address","name":"_to","type":"address"}],"name":"OwnershipTransferred","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"signer","type":"address"},{"indexed":true,"internalType":"bool","name":"status","type":"bool"}],"name":"SignerUpdated","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"orderID","type":"uint256"},{"indexed":true,"internalType":"address","name":"tokenAddress","type":"address"},{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"chainID","type":"uint256"}],"name":"TokenIn","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"orderID","type":"uint256"},{"indexed":true,"internalType":"address","name":"tokenAddress","type":"address"},{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"chainID","type":"uint256"}],"name":"TokenOut","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"orderID","type":"uint256"},{"indexed":true,"internalType":"address","name":"tokenAddress","type":"address"},{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"chainID","type":"uint256"}],"name":"TokenOutFailed","type":"event"},{"inputs":[],"name":"acceptOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_signer","type":"address"},{"internalType":"bool","name":"_status","type":"bool"}],"name":"changeSigner","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"coinIn","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"payable","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"},{"internalType":"uint256","name":"_orderID","type":"uint256"}],"name":"coinOut","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"orderID","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"signer","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"tokenAddress","type":"address"},{"internalType":"uint256","name":"tokenAmount","type":"uint256"},{"internalType":"uint256","name":"chainID","type":"uint256"}],"name":"tokenIn","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"tokenAddress","type":"address"},{"internalType":"address","name":"user","type":"address"},{"internalType":"uint256","name":"tokenAmount","type":"uint256"},{"internalType":"uint256","name":"_orderID","type":"uint256"},{"internalType":"uint256","name":"chainID","type":"uint256"}],"name":"tokenOut","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"stateMutability":"payable","type":"receive"}]
@@ -20,10 +20,15 @@ var CONTRACT_ADDR_ABI = JSON.parse(JSON.stringify(
   
 var CONTRACTS_ARY=[];
 CONTRACTS_ARY[34] = '0x14B55b5Bfa8D442760Fd3e31678F38eF61cDab87';	  // Dithereum TEstnet
+						
+const BigNumber = require('bignumber.js');
 								
 // For Polygon TestNet
 var chainid = 137; // Polygon TESTNET
 var BRIDGE_CHAIN = 34; // Dithereum TestNet
+
+//// MIN AMOUNT -> BRIDGE UI
+const MIN_MATIC = 10000000000000000000;
 
 // ORDERS
 var myorderID = [...Array(90000).keys()].toString().split(',');
@@ -291,8 +296,7 @@ async function company_bridge_send_method_coinin(_toWallet, _amt, orderid, _chai
 }
     										  
 
-async function checkLatestBlock(){
-	 //######  UNCOMMENT BELOW LINE FOR 100 BLOCKS  ######//
+async function checkLatestBlock(){	 
  	 var toblock =  await web3.eth.getBlockNumber();
  	 var fromblock = toblock-1500;
 	 
@@ -340,11 +344,11 @@ var getwsprovider = () =>{
 let web3 = new Web3(getwsprovider());
 
 // CoinIn -> TokenOut
-async function getEventData_CoinIn(_fromBlock, _toBlock){	
+async function getEventData_CoinIn(_fromBlock, _toBlock){
 	 const myinstance = new web3.eth.Contract(CONTRACT_ADDR_ABI, CONTRACT_ADDR.toString());	 
-		 		  //await myinstance.getPastEvents('CoinIn', { fromBlock: _fromBlock, toBlock: _toBlock },function(error,myevents){
-		 		  await myinstance.getPastEvents('CoinIn', { fromBlock: 24813380, toBlock: 24813390 }, function(error,myevents){
-		 		  	   console.log("EVENTS >>>>", myevents);
+		 		  await myinstance.getPastEvents('CoinIn', { fromBlock: _fromBlock, toBlock: _toBlock },function(error,myevents){
+		 		  //await myinstance.getPastEvents('CoinIn', { fromBlock: 26563028, toBlock: 26563028 }, function(error,myevents){
+		 		  	   console.log("EVENTS >>>>", myevents.blockNumber);
 		 				if(myevents === undefined){ 	return  }		 				
 		 				var myeventlen = myevents.length;		
 		 				process.env.CoinInEventLen = myevents.length;
@@ -360,20 +364,25 @@ async function getEventData_CoinIn(_fromBlock, _toBlock){
 		 				for(var k=0; k<myeventlen;k++){		 						 	
 		 					var myeve = myevents[k];		 					
 		 					console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-		 				   console.log("Event Details ::: >>>",myeve, myeve.event, myeve.blockNumber);
+		 				   //console.log("Event Details ::: >>>",myeve, myeve.event, myeve.blockNumber);
+		 				   console.log("Event Details ::: >>>", myeve.event, myeve.blockNumber);
 		 				   console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 		 				   //console.log("~~~~~~~~~~~~~~~~~~~>>> k, myeve >>>",k, myeve);
 		 					var _myorderid = myeve.returnValues.orderID;
 							var _mysendcoinsTo = myeve.returnValues.user;
-							var _myamount = myeve.returnValues.value;							
-							if(parseInt(_myamount)){
+							var _myamount = myeve.returnValues.value;
+														
+							if(! BigNumber(_myamount).lt(MIN_MATIC)){
+								console.log(">>>> in minimum amount check condition >>>>");								
 								try{										
 									(async()=>{																																			 		
 									   var cnt = await db_coinin_select(BRIDGE_CHAIN, _myorderid, _mysendcoinsTo, _myamount, secretText).catch(console.log);											      											   
 									})();									   										   
 								}catch(e){
 									console.log(">>>>>Catch >>>>",e);									
-								}																					
+								}																												
+						   }else{
+						   	console.log(">>> Amount is too small / Skipping >>>");
 						   }  	
 					   }												 												
 		 		});			 	 	 
