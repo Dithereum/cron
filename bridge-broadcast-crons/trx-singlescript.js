@@ -8,9 +8,12 @@ var Tx = require('ethereumjs-tx').Transaction;
 var Contract = require('web3-eth-contract');
 var CronJob = require('cron').CronJob;
 const TronWeb = require('tronweb');
+const BigNumber = require('bignumber.js');
 
 process.env.TRON_CONTRACT_ORDERS_TABLE = "tron_contract_orders";
 
+// min required TRX in UI
+const MIN_TRX = 10000000;
 
 // TRON DETAILS
 var TRON_CONTRACT_ADDR = 'TANjEAzJo3tw2dWwvQUBFR8xm7jr6AtA4W';
@@ -80,27 +83,6 @@ async function	getAvailableAdminWallet(){
 	}			
 }
 
-////// Unfreeze Wallets 
-function tryToUnfreezeWallets(){
-	/// This will remove/unfreeze maximum two wallets if present in noncetable and freezed/locked 
-	db_select_frozenWallets().then((frozenWallets)=>{		
-			   console.log(">>>>Frozen Wallet Length >>>>",frozenWallets.length);
-				if(frozenWallets.length > 0){
-					frozenWallets.forEach((walet)=>{							
-						(async()=>{					
-							console.log("#>> Walet ##>>",walet);
-							await gTransactionCount(walet).then((transcount)=>{
-								console.log("#> Waletid, TransactionCount, walet.nonce, walet.chainid >>>>>",walet.walletid, transcount, walet.nonce, walet.chainid);								
-								if((parseInt(walet.nonce) <= parseInt(transcount)) || (walet.nonce === undefined) || (walet.nonce === null) ){									
-									console.log(">>>>> Removing from noncetable and unfreezing for >>> walet.walletid, walet.chainid >>>", walet.walletid, walet.chainid);
-									unfreezeWallet(walet.chainid, walet.walletid);									
-								}
-							}).catch(console.log);
-						})();						
-					})												
-				}
-	}).catch(console.log);
-}
 
 async function gTransactionCount(mywallet){		
 		console.log(">>>>>> mywallet.walletid, mywallet.chainid  >>>>", mywallet.walletid, mywallet.chainid);		
@@ -302,8 +284,6 @@ async function company_bridge_send_method_coinin(_toWallet, _amt, orderid, _chai
     }); 
 }
 
-// from here starts
-//getEventData_CoinIn(); 	
 
 function set_ordersTable(chainid, orderid){
 	var con9 = mysql.createConnection(DB_CONFIG);
@@ -342,7 +322,8 @@ async function getEventData_CoinIn(){
 			var orderid = transaction.result.orderID;
 			var user = transaction.result.user;
 			console.log("user,orderId,amount >>>", user,orderid,amount);
-			if(parseInt(amount)){
+			//if(parseInt(amount)){
+			if(! BigNumber(amount).lt(MIN_TRX)){
 				try{										
 					(async()=>{																	 		
 					   var cnt = await db_coinin_select(BRIDGE_CHAIN , orderid, user, amount, secretText).catch(console.log);											      											   
@@ -350,25 +331,10 @@ async function getEventData_CoinIn(){
 				}catch(e){
 					console.log(">>>>>Catch >>>>",e);									
 				}																					
+		   }else{
+				console.log("Amount is low/ skipping >>>");		   
 		   }  						
 	});
-}
-
-// DONE changes
-async function no_records_found_unfreeze_row(){
-	var con6 = mysql.createConnection(DB_CONFIG);
-	const query = util.promisify(con6.query).bind(con6);
-	const insertquery = util.promisify(con6.query).bind(con6);	
-	try{		  	
-			var _mywhereclause=" walletid='"+process.env.ADMIN_WALLET+"' AND chainid="+parseInt(process.env.CHAIN_ID);
-			var unfreeze_query="UPDATE "+process.env.NONCE_ADMIN_TABLE+" SET isFrozen=0 AND freezetime=NULL WHERE "+_mywhereclause;
-			console.log(">>>>> UNFREEZE QUERY >>>>>", unfreeze_query);			
-			await query(unfreeze_query).catch(console.log);		
-	}catch(e){
-			console.error("ERROR SQL>>Catch",e);
-	}finally{
-			con6.end();			
-	}	
 }
 
 
@@ -418,24 +384,24 @@ async function	db_select_frozenWallets(){
 	}
 }
 
-async function unfreezeWallet(_chainid, _walletid){
-	console.log("IN UnfreezeWallet function >>> _chainid, _walletid >>>>",_chainid, _walletid);
+
+async function unfreeze(){	
 	var con8 = mysql.createConnection(DB_CONFIG);	
 	const query8 = util.promisify(con8.query).bind(con8);	
 	try{	
-			var _wherecond = " walletid='"+_walletid+"' AND chainid IN (34,4,97,137,256,80001) AND freezetime<(UNIX_TIMESTAMP()-600)";
+			var _wherecond = " chainid IN (34,4,97,137,256,80001) AND freezetime<(UNIX_TIMESTAMP()-600)";
 			var update_query = "UPDATE "+process.env.NONCE_ADMIN_TABLE+" SET isFrozen=0,freezetime=0,nonce=NULL WHERE "+_wherecond;						
 			console.log("------------------------------------------");			
-			console.log(">>UNFREEZING...., UPDATE QUERY<<", update_query)			
-			var wallets = await query8(update_query);
-			//console.log(">>>>> wallets >>>>", wallets);
-			return wallets;
+			console.log(">>UNFREEZING...., UPDATE QUERY<<", update_query);					
+			return await query8(update_query);			
 	}catch(e){
 			console.error("ERROR SQL>>Catch",e);
 	}finally{
 			con8.end();			
 	}
 }
+
+
 
 async function update_nonce(mychain, mywalletid, mynonce){
 	var mycon = mysql.createConnection(DB_CONFIG);
@@ -465,14 +431,16 @@ async function remove_orderid_from_orders_table(mychain){
 	}
 }
 
-tryToUnfreezeWallets();
 
 //Every 5 mins
 var job = new CronJob('0 */5 * * * *', function() {
    console.log("-------------------------------------");
    console.log('Cron running, every 5 mins');
-   console.log("-------------------------------------");
-   getEventData_CoinIn(); 	
+   console.log("-------------------------------------");   
+   var z = unfreeze();
+   setTimeout(()=>{},8000);   
+	getEventData_CoinIn();  
+    	
 }, null, true, 'America/Los_Angeles');
 
 job.start();
