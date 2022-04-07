@@ -466,17 +466,14 @@ async function getAvailableAdminWallet_bridge(bridgeweb3, _chainid) {
                 var update_query = "UPDATE " + process.env.NONCE_ADMIN_TABLE + " SET isFrozen=1, freezetime=UNIX_TIMESTAMP() WHERE " + _wherestr;
                 console.log(">>>> Bridge Query >>>> Update Query >>>>", update_query);
                 query5(update_query).catch(console.log);
-            }).catch(console.log);
-            ///					
+            }).catch(console.log);            					
         } else {
-            console.log(">$$$< NoTe >$$$<:::::::: No Admin wallet available >$$$<");
-            //// NEWLY ADDED
+            console.log(">$$$< NoTe >$$$<:::::::: No Admin wallet available >$$$<");           
             remove_orderid_from_orders_table(_chainid).then(() => {
                 setTimeout(() => {
                     process.exit(1);
                 }, 100000);
-            });
-            ////																	
+            });            
         }
     } catch (e) {
         console.error("ERROR SQL>>Catch", e);
@@ -514,8 +511,7 @@ async function company_bridge_send_method_coinin(_toWallet, _amt, orderid, _chai
     } catch (e) {
         console.log(" >>>>> EEEEE >>>>", e);
     }
-
-    ////////	 	 
+     
     await getAvailableAdminWallet_bridge(bridgeweb3, _chainid).then(() => {
         var _envobj = {};
         console.log("~~~~~~~~~~ GET AvailableAdminWallet ~~~~~~~~~~~");
@@ -527,7 +523,6 @@ async function company_bridge_send_method_coinin(_toWallet, _amt, orderid, _chai
         if (
             (!_envobj)
         ) {
-            //console.log("Restarting >>>>");				
             remove_orderid_from_orders_table(_chainid).then(() => {
                 setTimeout(() => {
                     process.exit(1);
@@ -599,7 +594,7 @@ async function company_bridge_send_method_coinin(_toWallet, _amt, orderid, _chai
                 try {
                     set_ordersTable(parseInt(_chainid), orderid.toString());
                     console.log(">>> Updating nonce >>>", _chainid, JSON.parse(_envobj)['walletid'].toString());
-                    //--------------------- 16 FEB 2022
+                    
                     var x2 = JSON.parse(process.env.ADMIN_WALLET_BRIDGE_34);
                     process.env.ADMIN_WALLET_BRIDGE_34 = JSON.stringify({
                         "walletid": x2['walletid'],
@@ -607,17 +602,15 @@ async function company_bridge_send_method_coinin(_toWallet, _amt, orderid, _chai
                         "chainid": x2['chainid'],
                         "lastnonce": nonc + 1
                     });
-
-                    //---------------------
+                    
                     bridgeweb3.eth.accounts.signTransaction(raw_tx, JSON.parse(_envobj)['walletpk'].toString(), function(error, result) {
                         if (!error) {
                             try {
                                 var serializedTx = result.rawTransaction;
-                                console.log("-->> Signed Transaction -->> Serialized Tx ::", serializedTx);
-                                //bridgeweb3.eth.sendSignedTransaction(serializedTx.toString('hex')).on('receipt', console.log);
+                                console.log("-->> Signed Transaction -->> Serialized Tx ::", serializedTx);                                
                                 bridgeweb3.eth.sendSignedTransaction(serializedTx.toString('hex')).on('receipt', (rec) => {
                                     console.log(">>TransactionDetails Status, TransactionHash >>>>", rec.status, rec.transactionHash);
-                                });
+                                }).on('error', console.log);
                                 update_nonce(_chainid, x2['walletid'].toString(), nonc + 1);
                             } catch (e) {
                                 console.log(e);
@@ -672,9 +665,11 @@ async function getEventData_CoinIn() {
         //console.log("transaction.result >>>>>",transaction.result);
         var amount = transaction.result.value;
         var orderid = transaction.result.orderID;
-        var user = transaction.result.user;
-        console.log("user,orderId,amount >>>", user, orderid, amount);
-        //if(parseInt(amount)){
+        var user = transaction.result.user;        
+        setTimeout(()=>{
+            console.log("user,orderId,amount >>>", user, orderid, amount);
+        }, 9000);
+        
         if (!BigNumber(amount).lt(MIN_TRX)) {
             try {
                 (async () => {
