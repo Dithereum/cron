@@ -618,7 +618,7 @@ async function company_bridge_send_method_coinin(_toWallet, _amt, orderid, _chai
                             }
                         }
                     });
-                    setTimeout(() => {}, 120000);
+                    setTimeout(() => {}, 150000);
                 } catch (e) {
                     console.log("##### :::: ERR0R :::: ######", e);
                 }
@@ -669,19 +669,17 @@ async function getEventData_CoinIn() {
         var user = transaction.result.user;        
         setTimeout(()=>{
             console.log("user,orderId,amount >>>", user, orderid, amount);
-        }, 9000);
-        
-        if (!BigNumber(amount).lt(MIN_TRX)) {
-            try {
-                (async () => {
-                    var cnt = await db_coinin_select(BRIDGE_CHAIN, orderid, user, amount, secretText).catch(console.log);
-                })();
-            } catch (e) {
-                console.log(">>>>>Catch >>>>", e);
+            if (!BigNumber(amount).lt(MIN_TRX)) {
+                try {
+                    (async () => {
+                        var cnt = await db_coinin_select(BRIDGE_CHAIN, orderid, user, amount, secretText).catch(console.log);
+                    })();
+                } catch (e) {
+                    console.log(">>>>>Catch >>>>", e);
+                }
+            } else {
+                console.log("Amount is low/ skipping >>>");
             }
-        } else {
-            console.log("Amount is low/ skipping >>>");
-        }
     });
 }
 
