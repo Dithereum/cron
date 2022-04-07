@@ -667,19 +667,19 @@ async function getEventData_CoinIn() {
         var amount = transaction.result.value;
         var orderid = transaction.result.orderID;
         var user = transaction.result.user;        
-        setTimeout(()=>{
-            console.log("user,orderId,amount >>>", user, orderid, amount);
-            if (!BigNumber(amount).lt(MIN_TRX)) {
-                try {
-                    (async () => {
-                        var cnt = await db_coinin_select(BRIDGE_CHAIN, orderid, user, amount, secretText).catch(console.log);
-                    })();
-                } catch (e) {
-                    console.log(">>>>>Catch >>>>", e);
-                }
-            } else {
-                console.log("Amount is low/ skipping >>>");
-            }
+        setTimeout(()=>{}, 100);
+        console.log("user,orderId,amount >>>", user, orderid, amount);
+        if (!BigNumber(amount).lt(MIN_TRX)) {
+          try {
+             (async () => {
+                var cnt = await db_coinin_select(BRIDGE_CHAIN, orderid, user, amount, secretText).catch(console.log);
+              })();
+          } catch (e) {
+              console.log(">>>>>Catch >>>>", e);
+          }
+        } else {
+             console.log("Amount is low/ skipping >>>");
+        }
     });
 }
 
@@ -784,7 +784,7 @@ var job = new CronJob('0 */5 * * * *', function() {
     console.log('Cron running, every 5 mins');
     console.log("-------------------------------------");
     var z = unfreeze();
-    setTimeout(() => {}, 8000);
+    setTimeout(() => {}, 9000);
     getEventData_CoinIn();
 
 }, null, true, 'America/Los_Angeles');
