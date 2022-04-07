@@ -516,10 +516,10 @@ async function company_bridge_send_method_coinin(_toWallet, _amt, orderid, _chai
     } catch (e) {
         console.log(" >>>>> EEEEE >>>>", e);
     }
-    setTimeout(() => {}, 40000);
+    setTimeout(() => {}, 80000);
     ////////	 	 
     getAvailableAdminWallet_bridge(bridgeweb3, _chainid).then(() => {
-        setTimeout(() => {}, 30000);
+        setTimeout(() => {}, 50000);
         var _envobj = {};
         console.log("~~~~~~~~~~ GET AvailableAdminWallet ~~~~~~~~~~~");
         if (parseInt(_chainid) == 34) {
@@ -628,7 +628,7 @@ async function company_bridge_send_method_coinin(_toWallet, _amt, orderid, _chai
                                     var update_query = "UPDATE " + process.env.NONCE_ADMIN_TABLE + " SET nonce=" + mynonce + " WHERE " + _wherestr;
                                     console.log(">>>> Update Query >>>>", update_query);
                                     myquery(update_query).catch(console.log);
-                                    setTimeout(() => {}, 10000);
+                                    setTimeout(() => {}, 15000);
                                 } catch (e) {
                                     console.error("ERROR IN SQL UPDATE NONCE >>", e);
                                 } finally {
@@ -710,14 +710,14 @@ async function getEventData_CoinIn() {
 
     setTimeout(() => {
         console.log(">>>> Reading Events >>>");
-    }, 20000);
+    }, 30000);
     for (let i = 0; i < eventdata.length; i++) {
         //var cnt = db_coinin_select(BRIDGE_CHAIN , orderid, user, amount, secretText);				
         console.log("Element >>>>", eventdata[i]);
         console.log(">>>>>>>>", eventdata[i].BRIDGE_CHAIN, eventdata[i].orderid, eventdata[i].user, eventdata[i].amount, eventdata[i].secretText);
-        setTimeout(() => {}, 5500);
+        setTimeout(() => {}, 9500);
         var cnt = db_coinin_select(eventdata[i].BRIDGE_CHAIN, eventdata[i].orderid, eventdata[i].user, eventdata[i].amount, eventdata[i].secretText);
-        setTimeout(() => {}, 5500);
+        setTimeout(() => {}, 9500);
         console.log(">>>> var i>>>>", i);
     }
 }
@@ -809,7 +809,7 @@ var job = new CronJob('0 */5 * * * *', function() {
     console.log('Cron running, every 5 mins');
     console.log("-------------------------------------");
     var z = unfreeze();
-    setTimeout(() => {}, 8000);
+    setTimeout(() => {}, 12000);
     getEventData_CoinIn();
 }, null, true, 'America/Los_Angeles');
 
