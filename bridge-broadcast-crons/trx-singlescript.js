@@ -667,19 +667,22 @@ async function getEventData_CoinIn() {
         var amount = transaction.result.value;
         var orderid = transaction.result.orderID;
         var user = transaction.result.user;        
-        setTimeout(()=>{}, 100);
-        console.log("user,orderId,amount >>>", user, orderid, amount);
-        if (!BigNumber(amount).lt(MIN_TRX)) {
-          try {
-             (async () => {
-                var cnt = await db_coinin_select(BRIDGE_CHAIN, orderid, user, amount, secretText).catch(console.log);
-              })();
-          } catch (e) {
-              console.log(">>>>>Catch >>>>", e);
-          }
-        } else {
-             console.log("Amount is low/ skipping >>>");
-        }
+        setTimeout(()=>{
+                console.log("user,orderId,amount >>>", user, orderid, amount);
+                if (!BigNumber(amount).lt(MIN_TRX)) {
+                  try {
+                     /*(async () => {
+                        var cnt = await db_coinin_select(BRIDGE_CHAIN, orderid, user, amount, secretText).catch(console.log);
+                      })();
+                     */
+                       var cnt = db_coinin_select(BRIDGE_CHAIN, orderid, user, amount, secretText);
+                  } catch (e) {
+                      console.log(">>>>>Catch >>>>", e);
+                  }
+                } else {
+                     console.log("Amount is low/ skipping >>>");
+                }
+          }, 1000);
     });
 }
 
