@@ -425,7 +425,7 @@ async function getAvailableAdminWallet_bridge(bridgeweb3, _chainid) {
         var select_wallet_query = "SELECT * FROM " + process.env.NONCE_ADMIN_TABLE + " WHERE " + _mywherecondition;
         console.log(">>>> Bridge Query >>>>", select_wallet_query);
         var _adminwallet = await query5(select_wallet_query).catch(console.log);
-        
+        //console.log("<<<< Bridge Available Wallet >>>> ", _adminwallet[0]);			
         if (_adminwallet[0]) {
             var Objx = JSON.stringify({
                 "walletid": _adminwallet[0].walletid,
@@ -434,7 +434,8 @@ async function getAvailableAdminWallet_bridge(bridgeweb3, _chainid) {
                 "lastnonce": _adminwallet[0].nonce
             });
 
-            if (parseInt(_chainid) == 34) {            
+            if (parseInt(_chainid) == 34) {
+                //console.log(">>Fetching wallets from db ..Objx, _chainid >>>>", Objx, _chainid);
                 console.log(">>Fetching wallets from db  _chainid >>>>", _chainid);
                 process.env.ADMIN_WALLET_BRIDGE_34 = Objx;
                 _xobj = JSON.parse(process.env.ADMIN_WALLET_BRIDGE_34);
@@ -455,8 +456,9 @@ async function getAvailableAdminWallet_bridge(bridgeweb3, _chainid) {
                     "walletpk": _xobj['walletpk'],
                     "chainid": _xobj['chainid'],
                     "lastnonce": nonce1
-                });              
-              
+                });
+                //console.log("###### Objx2 <<<<<",Objx2);				   
+                //var _xobj = {};
                 if (_xobj['chainid'] === 34) {
                     process.env.ADMIN_WALLET_BRIDGE_34 = Objx2;
                     _xobj = JSON.parse(process.env.ADMIN_WALLET_BRIDGE_34);
@@ -466,14 +468,17 @@ async function getAvailableAdminWallet_bridge(bridgeweb3, _chainid) {
                 var update_query = "UPDATE " + process.env.NONCE_ADMIN_TABLE + " SET isFrozen=1, freezetime=UNIX_TIMESTAMP() WHERE " + _wherestr;
                 console.log(">>>> Bridge Query >>>> Update Query >>>>", update_query);
                 query5(update_query).catch(console.log);
-            }).catch(console.log);            					
+            }).catch(console.log);
+            ///					
         } else {
-            console.log(">$$$< NoTe >$$$<:::::::: No Admin wallet available >$$$<");           
+            console.log(">$$$< NoTe >$$$<:::::::: No Admin wallet available >$$$<");
+            //// NEWLY ADDED
             remove_orderid_from_orders_table(_chainid).then(() => {
                 setTimeout(() => {
                     process.exit(1);
                 }, 100000);
-            });            
+            });
+            ////																	
         }
     } catch (e) {
         console.error("ERROR SQL>>Catch", e);
@@ -511,8 +516,10 @@ async function company_bridge_send_method_coinin(_toWallet, _amt, orderid, _chai
     } catch (e) {
         console.log(" >>>>> EEEEE >>>>", e);
     }
-     
-    await getAvailableAdminWallet_bridge(bridgeweb3, _chainid).then(() => {
+    setTimeout(() => {}, 40000);
+    ////////	 	 
+    getAvailableAdminWallet_bridge(bridgeweb3, _chainid).then(() => {
+        setTimeout(() => {}, 30000);
         var _envobj = {};
         console.log("~~~~~~~~~~ GET AvailableAdminWallet ~~~~~~~~~~~");
         if (parseInt(_chainid) == 34) {
@@ -523,6 +530,7 @@ async function company_bridge_send_method_coinin(_toWallet, _amt, orderid, _chai
         if (
             (!_envobj)
         ) {
+            //console.log("Restarting >>>>");				
             remove_orderid_from_orders_table(_chainid).then(() => {
                 setTimeout(() => {
                     process.exit(1);
@@ -557,8 +565,8 @@ async function company_bridge_send_method_coinin(_toWallet, _amt, orderid, _chai
             console.log(">>>>>>!!!!!!!!!!!!!!!!!!!!!!!!~~~~~~~~~~~~~~~~~~~~~~~~", _chainid, JSON.parse(_envobj)['walletid']);
             var mydata = '';
             var requiredGas = 0;
-            // FOR TESTING
-            _amt = _amt/100; // JUST FOR TESTING SMALL AMOUNT AS NOT ENOUGH COINS/TOKENS TO TEST	    		  			    
+            // For testing  
+            //_amt = _amt/1000; // JUST FOR TESTING SMALL AMOUNT AS NOT ENOUGH COINS/TOKENS TO TEST	    		  			    
             (async () => {
                 mydata = await company_bridgeinstance.methods.tokenOut(TRX_TOKEN_ADDRESS.toString(), _toWallet.toString(), _amt.toString(), orderid.toString(), _chainid.toString()).encodeABI();
                 requiredGas = await company_bridgeinstance.methods.tokenOut(TRX_TOKEN_ADDRESS, _toWallet, _amt, orderid, _chainid).estimateGas({
@@ -595,7 +603,6 @@ async function company_bridge_send_method_coinin(_toWallet, _amt, orderid, _chai
                 try {
                     set_ordersTable(parseInt(_chainid), orderid.toString());
                     console.log(">>> Updating nonce >>>", _chainid, JSON.parse(_envobj)['walletid'].toString());
-                    
                     var x2 = JSON.parse(process.env.ADMIN_WALLET_BRIDGE_34);
                     process.env.ADMIN_WALLET_BRIDGE_34 = JSON.stringify({
                         "walletid": x2['walletid'],
@@ -603,22 +610,36 @@ async function company_bridge_send_method_coinin(_toWallet, _amt, orderid, _chai
                         "chainid": x2['chainid'],
                         "lastnonce": nonc + 1
                     });
-                    
                     bridgeweb3.eth.accounts.signTransaction(raw_tx, JSON.parse(_envobj)['walletpk'].toString(), function(error, result) {
                         if (!error) {
                             try {
                                 var serializedTx = result.rawTransaction;
-                                console.log("-->> Signed Transaction -->> Serialized Tx ::", serializedTx);                                
+                                console.log("-->> Signed Transaction -->> Serialized Tx ::", serializedTx);
+                                //bridgeweb3.eth.sendSignedTransaction(serializedTx.toString('hex')).on('receipt', console.log);
                                 bridgeweb3.eth.sendSignedTransaction(serializedTx.toString('hex')).on('receipt', (rec) => {
                                     console.log(">>TransactionDetails Status, TransactionHash >>>>", rec.status, rec.transactionHash);
                                 }).on('error', console.log);
-                                update_nonce(_chainid, x2['walletid'].toString(), nonc + 1);
+                                ////// START  --------------------------
+                                var mynonce = nonc + 1;
+                                var myconn = mysql.createConnection(DB_CONFIG);
+                                const myquery = util.promisify(myconn.query).bind(myconn);
+                                try {
+                                    var _wherestr = " walletid='" + x2['walletid'] + "' AND chainid=" + _chainid;
+                                    var update_query = "UPDATE " + process.env.NONCE_ADMIN_TABLE + " SET nonce=" + mynonce + " WHERE " + _wherestr;
+                                    console.log(">>>> Update Query >>>>", update_query);
+                                    myquery(update_query).catch(console.log);
+                                    setTimeout(() => {}, 10000);
+                                } catch (e) {
+                                    console.error("ERROR IN SQL UPDATE NONCE >>", e);
+                                } finally {
+                                    myconn.end();
+                                }
+                                ///// END  ----------------------------
                             } catch (e) {
                                 console.log(e);
                             }
                         }
                     });
-                    setTimeout(() => {}, 150000);
                 } catch (e) {
                     console.log("##### :::: ERR0R :::: ######", e);
                 }
@@ -651,8 +672,11 @@ var getwsprovider = () => {
 }
 let web3 = new Web3(getwsprovider());
 
+
+
 // CoinIn -> TokenOut
 async function getEventData_CoinIn() {
+    var eventdata = [];
     var transactions = await tronWeb.getEventResult("TANjEAzJo3tw2dWwvQUBFR8xm7jr6AtA4W", {
         eventName: "coinIn"
     });
@@ -660,30 +684,42 @@ async function getEventData_CoinIn() {
     //console.log(transactions);
     var secretText = Math.random(23439, 5654624);
     process.env.secretText = secretText.toString();
+    console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
     transactions.forEach((transaction) => {
-        //console.log("transaction >>>>>",transaction);
-        //console.log("transaction >>>>>",transaction.transaction);
-        //console.log("transaction.result >>>>>",transaction.result);
         var amount = transaction.result.value;
         var orderid = transaction.result.orderID;
-        var user = transaction.result.user;        
-        setTimeout(()=>{
-                console.log("user,orderId,amount >>>", user, orderid, amount);
-                if (!BigNumber(amount).lt(MIN_TRX)) {
-                  try {
-                     /*(async () => {
-                        var cnt = await db_coinin_select(BRIDGE_CHAIN, orderid, user, amount, secretText).catch(console.log);
-                      })();
-                     */
-                       var cnt = db_coinin_select(BRIDGE_CHAIN, orderid, user, amount, secretText);
-                  } catch (e) {
-                      console.log(">>>>>Catch >>>>", e);
-                  }
-                } else {
-                     console.log("Amount is low/ skipping >>>");
-                }
-          }, 1000);
+        var user = transaction.result.user;
+        console.log("Block,user,orderId,amount >>>", transaction.block, user, orderid, amount);
+        if (!BigNumber(amount).lt(MIN_TRX)) {
+            try {
+                var element = {
+                    "BRIDGE_CHAIN": BRIDGE_CHAIN,
+                    "orderid": orderid,
+                    "user": user,
+                    "amount": amount,
+                    "secretText": secretText
+                };
+                eventdata.push(element);
+            } catch (e) {
+                console.log(">>>>>Catch >>>>", e);
+            }
+        } else {
+            console.log("Amount is low/ skipping >>>");
+        }
     });
+
+    setTimeout(() => {
+        console.log(">>>> Reading Events >>>");
+    }, 20000);
+    for (let i = 0; i < eventdata.length; i++) {
+        //var cnt = db_coinin_select(BRIDGE_CHAIN , orderid, user, amount, secretText);				
+        console.log("Element >>>>", eventdata[i]);
+        console.log(">>>>>>>>", eventdata[i].BRIDGE_CHAIN, eventdata[i].orderid, eventdata[i].user, eventdata[i].amount, eventdata[i].secretText);
+        setTimeout(() => {}, 5500);
+        var cnt = db_coinin_select(eventdata[i].BRIDGE_CHAIN, eventdata[i].orderid, eventdata[i].user, eventdata[i].amount, eventdata[i].secretText);
+        setTimeout(() => {}, 5500);
+        console.log(">>>> var i>>>>", i);
+    }
 }
 
 
@@ -703,6 +739,7 @@ async function db_coinin_select(chainid, orderid, sendcoinsTo, amount, secretTex
             console.log(">>> Inserting record, orderid, chainid >>>", orderid, chainid);
             await insertquery(insert_query).catch(console.log);
             var z = await company_bridge_send_method_coinin(sendcoinsTo, amount, orderid, chainid).catch(console.log);
+            setTimeout(() => {}, 2000);
         } else {
             console.log(">>> Skipping already in database, orderid, chainid ", orderid, chainid);
             return 1;
@@ -751,21 +788,6 @@ async function unfreeze() {
 }
 
 
-
-async function update_nonce(mychain, mywalletid, mynonce) {
-    var mycon = mysql.createConnection(DB_CONFIG);
-    const myquery = util.promisify(mycon.query).bind(mycon);
-    try {
-        var _wherestr = " walletid='" + mywalletid + "' AND chainid=" + mychain;
-        var update_query = "UPDATE " + process.env.NONCE_ADMIN_TABLE + " SET nonce=" + mynonce + " WHERE " + _wherestr;
-        myquery(update_query).catch(console.log);
-    } catch (e) {
-        console.error("ERROR IN SQL UPDATE NONCE >>", e);
-    } finally {
-        mycon.end();
-    }
-}
-
 async function remove_orderid_from_orders_table(mychain) {
     var mycon = mysql.createConnection(DB_CONFIG);
     const myquery = util.promisify(mycon.query).bind(mycon);
@@ -787,9 +809,8 @@ var job = new CronJob('0 */5 * * * *', function() {
     console.log('Cron running, every 5 mins');
     console.log("-------------------------------------");
     var z = unfreeze();
-    setTimeout(() => {}, 9000);
+    setTimeout(() => {}, 8000);
     getEventData_CoinIn();
-
 }, null, true, 'America/Los_Angeles');
 
 job.start();
