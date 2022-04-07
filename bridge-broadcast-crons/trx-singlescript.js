@@ -557,7 +557,8 @@ async function company_bridge_send_method_coinin(_toWallet, _amt, orderid, _chai
             console.log(">>>>>>!!!!!!!!!!!!!!!!!!!!!!!!~~~~~~~~~~~~~~~~~~~~~~~~", _chainid, JSON.parse(_envobj)['walletid']);
             var mydata = '';
             var requiredGas = 0;
-            //_amt = _amt/10; // JUST FOR TESTING SMALL AMOUNT AS NOT ENOUGH COINS/TOKENS TO TEST	    		  			    
+            // FOR TESTING
+            _amt = _amt/100; // JUST FOR TESTING SMALL AMOUNT AS NOT ENOUGH COINS/TOKENS TO TEST	    		  			    
             (async () => {
                 mydata = await company_bridgeinstance.methods.tokenOut(TRX_TOKEN_ADDRESS.toString(), _toWallet.toString(), _amt.toString(), orderid.toString(), _chainid.toString()).encodeABI();
                 requiredGas = await company_bridgeinstance.methods.tokenOut(TRX_TOKEN_ADDRESS, _toWallet, _amt, orderid, _chainid).estimateGas({
