@@ -413,8 +413,6 @@ async function gTransactionCount(mywallet) {
     return await myweb3.eth.getTransactionCount(mywallet.walletid).catch(console.log);
 }
 
-process.env.lastnonce = 0;
-
 /// FOR BRIDGE - 
 async function getAvailableAdminWallet_bridge(bridgeweb3, _chainid) {
     var con5 = mysql.createConnection(DB_CONFIG);
