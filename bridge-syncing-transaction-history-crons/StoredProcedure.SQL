@@ -1,0 +1,37 @@
+USE `test`;
+DROP PROCEDURE IF EXISTS `SP_BRIDGE_TRANSACTION`;  
+DELIMITER $$
+CREATE PROCEDURE SP_BRIDGE_TRANSACTION (
+	 IN USER_WALLET VARCHAR(50),  
+ 	 IN ORDER_ID INT(11), 
+ 	 IN FROM_CHAIN INT(11),
+ 	 IN FROM_CURRENCY VARCHAR(5), 
+    IN FROM_TXN_HASH VARCHAR(70),
+    IN FROM_AMOUNT FLOAT,
+    IN TO_CHAIN INT(11),
+    IN TO_CURRENCY VARCHAR(5),
+    IN TO_TXN_HASH VARCHAR(70),
+    IN TO_AMOUNT FLOAT
+  ) 
+BEGIN
+	IF NOT EXISTS( 	 
+    	 SELECT 1 from `bridge_transactions` where 
+    	 `userWallet`=USER_WALLET AND  
+    	 `orderID`=ORDER_ID AND  
+    	 `fromChain`=FROM_CHAIN AND  
+    	 `fromCurrency`=FROM_CURRENCY AND
+    	 `fromTxnHash`=FROM_TXN_HASH AND 	
+    	 `fromAmount`=FROM_AMOUNT AND  
+    	 `toChain`=TO_CHAIN  AND  
+    	 `toCurrency`=TO_CURRENCY     
+	 )
+	 THEN	 
+	 	  INSERT INTO `bridge_transactions` (`userWallet`,`orderID`,`fromChain`,`fromCurrency`,`fromTxnHash`,`fromAmount`,`toChain`,`toCurrency`,`toTxnHash`,`toAmount`) VALUES (	USER_WALLET,ORDER_ID,FROM_CHAIN,FROM_CURRENCY,FROM_TXN_HASH,FROM_AMOUNT,TO_CHAIN,TO_CURRENCY,TO_TXN_HASH,TO_AMOUNT);
+        SELECT concat('INSERTED', '!') as RESPONSE;   	  
+    END IF;
+END; $$
+DELIMITER ;
+
+/* SAMPLE CALL
+mysql> call SP_BRIDGE_TRANSACTION('0x62E1960De1F9CA64d8fA578E871c2fe48b596b99',1,34,'ETH','0x8ca16ca304cc1943bc8f90ada476f679161896469146c7f00b52a43590725f61','1e17',4,'ETH','',0);
+*/
