@@ -52,13 +52,10 @@ execute();
 
 
 async function execute(){
-	
-	
-	
 		var currentBlock = await web3.eth.getBlockNumber();
 		currentBlock = currentBlock-5;	//we will go 5 blocks in the past, just for safe side
 		//currentBlock = "24813400";
-
+		currentBlock = "24813387";
 
 		try{
 			var select_wallet_query = "SELECT * FROM lastblock";	
@@ -118,6 +115,7 @@ async function getEventData_CoinIn(_fromBlock, _toBlock){
 		 				for(var i=0;i<eventlen; i++){		 						 										
 		 					var eve = events[i];
 							//console.log("EVE >>>>>>",eve)
+							//console.log(">>>>>>>>>>>>.eve.returnValues.value",eve.returnValues.value);
 		 					var _blkNumber = eve.blockNumber;
 							var _txnHash = eve.transactionHash;
 		 					var _orderid = eve.returnValues.orderID;							
@@ -128,11 +126,11 @@ async function getEventData_CoinIn(_fromBlock, _toBlock){
 														
 							if(parseInt(_amount)){							
 								try{
-									
-									var insert_query = "INSERT INTO bridge_transactions (`userWallet`,`orderID`,`fromChain`,`fromCurrency`,`fromTxnHash`,`fromAmount`,`toChain`,`toCurrency`,`toTxnHash`,`toAmount`) VALUES ('"+_userWallet+"',"+_orderid+","+MATIC_CHAIN_ID+",'"+DEFAULT_COIN+"','"+_txnHash+"',"+_amount+","+DTH_CHAIN_ID+",'"+DEFAULT_COIN+"','"+_toTxnHash+"','"+_toAmount+"')";		
-									console.log(">>> Inserting record, orderid, transactionHash >>>",_orderid, _txnHash);
-									await db_query(insert_query).catch(console.log);
-										
+   								var sp_query = "call SP_BRIDGE_TRANSACTION('"+_userWallet+"',"+_orderid+","+MATIC_CHAIN_ID+",'"+DEFAULT_COIN+"','"+_txnHash+"','"+_amount+"',"+DTH_CHAIN_ID+",'"+DEFAULT_COIN+"','"+_toTxnHash+"',"+_toAmount+")";
+									console.log("-----------------------------------------------------------------------------");
+									console.log(">>>>> SP_Query >>>>>",sp_query);
+									console.log("-----------------------------------------------------------------------------");
+									await db_query(sp_query).catch(console.log);
 								}catch(e){
 									console.log(">>>>>Catch >>>>",e);									
 								}																
