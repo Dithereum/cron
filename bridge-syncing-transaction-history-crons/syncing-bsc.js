@@ -8,9 +8,9 @@ const Web3 = require("web3");
 
 var DB_CONFIG = {
     host: "localhost",
-    user: "dithereum",
-    password: "Dith#RT.,22",
-    database: "TESTNET_DITHEREUM_BRIDGE_SYNCING",
+    user: "root",
+    password: "Admin@1234",
+    database: "TEST",
     connectTimeout: 100000,
     port: 3306
 };
