@@ -54,28 +54,20 @@ const query5 = util.promisify(con5.query).bind(con5);
 execute();
 
 
-async function execute(){
-	
+async function execute(){	
 		var currentBlock = await web3.eth.getBlockNumber();
 		currentBlock = currentBlock-5;	//we will go 5 blocks in the past, just for safe side	   	
-
-
+		
 		try{
 			var select_wallet_query = "SELECT dithereum FROM lastblock";	
 			var lastBlockData = await query5(select_wallet_query).catch(console.log);
-			
-		   		   
+			   		   
 			if(lastBlockData[0]){
-				var lastBlockDatabase = lastBlockData[0].dithereum;
-				
+				var lastBlockDatabase = lastBlockData[0].dithereum;				
 				//updating the current block in the database
-				await lastBlockWorked(currentBlock);
-				
-					 
+				await lastBlockWorked(currentBlock);	 
 				await getEventData_TokenIn(lastBlockDatabase, currentBlock);
 				await getEventData_TokenOut((lastBlockDatabase-20), (currentBlock-20));	//additional 20 blocks past for tokenOut
-				
-
 			}
 			
 		}catch(e){
@@ -84,7 +76,6 @@ async function execute(){
 		}finally{
 			con5.end();
 		}
-
 }
 
 
@@ -143,17 +134,15 @@ async function getEventData_TokenIn(_fromBlock, _toBlock){
 								_fromCurrency = "NA";
 								_toCurrency = "NA";
 							}
-							
-							
+													
 														
 							if(parseInt(_amount)){							
-								try{
-									
-									var insert_query = "INSERT INTO bridge_transactions (`userWallet`,`orderID`,`fromChain`,`fromCurrency`,`fromTxnHash`,`fromAmount`,`toChain`,`toCurrency`,`toTxnHash`,`toAmount`) VALUES ('"+_userWallet+"',"+_orderid+","+DTH_CHAIN_ID+",'"+_fromCurrency+"','"+_txnHash+"',"+_amount+","+_toChain+",'"+_toCurrency+"','"+_toTxnHash+"','"+_toAmount+"')";		
-								   console.log("Insert Query >>>>", insert_query);									
-									console.log(">>> Inserting record, orderid, transactionHash >>>",_orderid, _txnHash);
-									await db_query(insert_query).catch(console.log);
-										
+								try{									
+									var sp_query = "call SP_BRIDGE_TRANSACTION('"+_userWallet+"',"+_orderid+","+DTH_CHAIN_ID+",'"+_fromCurrency+"','"+_txnHash+"','"+_amount+"',"+_toChain+",'"+_toCurrency+"','"+_toTxnHash+"',"+_toAmount+")";									
+									console.log("-----------------------------------------------------------------------------");
+									console.log(">>>>> SP_Query >>>>>",sp_query);
+									console.log("-----------------------------------------------------------------------------");								
+									await db_query(sp_query).catch(console.log);
 								}catch(e){
 									console.log(">>>>>Catch >>>>",e);									
 								}																
@@ -225,12 +214,6 @@ async function getEventData_TokenOut(_fromBlock, _toBlock){
 		 		////
 		 }catch(e){	console.log("<<<< Error >>>>",e); }	 	 	 
 }
-
-
-
-
-
-
 
 
 async function lastBlockWorked(_lastBlocknumber){	
