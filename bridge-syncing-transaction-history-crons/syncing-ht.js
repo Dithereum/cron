@@ -72,7 +72,6 @@ async function execute(){
 				//updating the current block in the database
 				await lastBlockWorked(currentBlock);
 				
-				//var currentBlock=9668500;
 				var lastBlockDatabase=currentBlock-5000;	
 								
 				await getEventData_CoinIn(lastBlockDatabase, currentBlock);
@@ -88,9 +87,6 @@ async function execute(){
 
 }
  
-
-
-
 
 async function getEventData_CoinIn(_fromBlock, _toBlock){ 
 	 
@@ -117,10 +113,11 @@ async function getEventData_CoinIn(_fromBlock, _toBlock){
 														
 							if(parseInt(_amount)){							
 								try{
-									var insert_query = "INSERT INTO bridge_transactions (`userWallet`,`orderID`,`fromChain`,`fromCurrency`,`fromTxnHash`,`fromAmount`,`toChain`,`toCurrency`,`toTxnHash`,`toAmount`) VALUES ('"+_userWallet+"',"+_orderid+","+HT_CHAIN_ID+",'"+DEFAULT_COIN+"','"+_txnHash+"',"+_amount+","+DTH_CHAIN_ID+",'"+DEFAULT_COIN+"','"+_toTxnHash+"','"+_toAmount+"')";
-									//console.log(">>>>> Insert Query >>>>>",insert_query);		
-									console.log(">>> Inserting record, orderid, transactionHash >>>",_orderid, _txnHash);
-									await db_query(insert_query).catch(console.log);										
+									var sp_query = "call SP_BRIDGE_TRANSACTION ('"+_userWallet+"',"+_orderid+","+HT_CHAIN_ID+",'"+DEFAULT_COIN+"','"+_txnHash+"','"+_amount+"',"+DTH_CHAIN_ID+",'"+DEFAULT_COIN+"','"+_toTxnHash+"',"+_toAmount+")";
+									console.log("-----------------------------------------------------------------------------");
+									console.log(">>>>> SP_Query >>>>>",sp_query);
+									console.log("-----------------------------------------------------------------------------");									
+									await db_query(sp_query).catch(console.log);										
 								}catch(e){
 									console.log(">>>>>Catch >>>>",e);									
 								}																
@@ -162,10 +159,11 @@ async function getEventData_TokenIn(_fromBlock, _toBlock){
 														
 							if(parseInt(_amount)){							
 								try{
-									
-									var insert_query = "INSERT INTO bridge_transactions (`userWallet`,`orderID`,`fromChain`,`fromCurrency`,`fromTxnHash`,`fromAmount`,`toChain`,`toCurrency`,`toTxnHash`,`toAmount`) VALUES ('"+_userWallet+"',"+_orderid+","+HT_CHAIN_ID+",'"+FROM_TOKEN+"','"+_txnHash+"',"+_amount+","+DTH_CHAIN_ID+",'"+TO_TOKEN+"','"+_toTxnHash+"','"+_toAmount+"')";		
-									console.log(">>> Inserting record, orderid, transactionHash >>>",_orderid, _txnHash);
-									await db_query(insert_query).catch(console.log);
+									var sp_query = "call SP_BRIDGE_TRANSACTION('"+_userWallet+"',"+_orderid+","+HT_CHAIN_ID+",'"+FROM_TOKEN+"','"+_txnHash+"','"+_amount+"',"+DTH_CHAIN_ID+",'"+DEFAULT_COIN+"','"+_toTxnHash+"',"+_toAmount+")";									
+									console.log("-----------------------------------------------------------------------------");
+									console.log(">>>>> SP_Query >>>>>",sp_query);
+									console.log("-----------------------------------------------------------------------------");
+									await db_query(sp_query).catch(console.log);
 										
 								}catch(e){
 									console.log(">>>>>Catch >>>>",e);									
