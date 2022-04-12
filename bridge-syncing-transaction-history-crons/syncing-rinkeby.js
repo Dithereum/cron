@@ -59,14 +59,12 @@ async function execute(){
 	
 		var currentBlock = await web3.eth.getBlockNumber();
 		currentBlock = currentBlock-5;	//we will go 5 blocks in the past, just for safe side
-		//currentBlock = 14876849;		
+		//currentBlock = 10460100;		
 
 		try{
 			var select_wallet_query = "SELECT `rinkeby` FROM lastblock";	
 			var lastBlockData = await query5(select_wallet_query).catch(console.log);
-			
-			
-			
+
 			console.log("rrr");
 			console.log(lastBlockData);
 			console.log(currentBlock);
@@ -80,15 +78,13 @@ async function execute(){
 				await lastBlockWorked(currentBlock);
 				
 				//var currentBlock=9668500;
-				var lastBlockDatabase=currentBlock-5000;	
+				var lastBlockDatabase=currentBlock-5000;
 				
 				
 				await getEventData_CoinIn(lastBlockDatabase, currentBlock);	 
 				await getEventData_TokenIn(lastBlockDatabase, currentBlock);
 				await getEventData_CoinOut((lastBlockDatabase-20), (currentBlock-20));	//additional 20 blocks past, for coin out
-				await getEventData_TokenOut((lastBlockDatabase-20), (currentBlock-20));	//additional 20 blocks past, for token out
-				
-
+				await getEventData_TokenOut((lastBlockDatabase-20), (currentBlock-20));	//additional 20 blocks past, for token out				
 			}
 			
 		}catch(e){
@@ -99,10 +95,6 @@ async function execute(){
 		}
 
 }
-
-
-
-
 
 async function getEventData_CoinIn(_fromBlock, _toBlock){
 	 try{				
@@ -127,10 +119,11 @@ async function getEventData_CoinIn(_fromBlock, _toBlock){
 												
 							if(parseInt(_amount)){							
 								try{
-									var insert_query = "INSERT INTO bridge_transactions (`userWallet`,`orderID`,`fromChain`,`fromCurrency`,`fromTxnHash`,`fromAmount`,`toChain`,`toCurrency`,`toTxnHash`,`toAmount`) VALUES ('"+_userWallet+"',"+_orderid+","+RINKEBY_CHAIN_ID+",'"+DEFAULT_COIN+"','"+_txnHash+"',"+_amount+","+DTH_CHAIN_ID+",'"+DEFAULT_COIN+"','"+_toTxnHash+"','"+_toAmount+"')";											
-									console.log(">>> Inserting record, orderid, transactionHash >>>",_orderid, _txnHash);
-									await db_query(insert_query).catch(console.log);
-										
+								  	var sp_query = "call SP_BRIDGE_TRANSACTION('"+_userWallet+"',"+_orderid+","+RINKEBY_CHAIN_ID+",'"+DEFAULT_COIN+"','"+_txnHash+"','"+_amount+"',"+DTH_CHAIN_ID+",'"+DEFAULT_COIN+"','"+_toTxnHash+"',"+_toAmount+")";
+									console.log("-----------------------------------------------------------------------------");
+									console.log(">>>>> SP_Query >>>>>",sp_query);
+									console.log("-----------------------------------------------------------------------------");
+									await db_query(sp_query).catch(console.log);
 								}catch(e){
 									console.log(">>>>>Catch >>>>",e);									
 								}																
@@ -185,11 +178,12 @@ async function getEventData_TokenIn(_fromBlock, _toBlock){
 							var _toAmount = 0.0;
 							
 							if(parseInt(_amount)){							
-								try{									
-									var insert_query = "INSERT INTO bridge_transactions (`userWallet`,`orderID`,`fromChain`,`fromCurrency`,`fromTxnHash`,`fromAmount`,`toChain`,`toCurrency`,`toTxnHash`,`toAmount`) VALUES ('"+_userWallet+"',"+_orderid+","+RINKEBY_CHAIN_ID+",'"+FROM_TOKEN+"','"+_txnHash+"',"+_amount+","+DTH_CHAIN_ID+",'"+TO_TOKEN+"','"+_toTxnHash+"','"+_toAmount+"')";									
-									console.log(">>> Inserting record, orderid, transactionHash >>>",_orderid, _txnHash);
-									await db_query(insert_query).catch(console.log);
-										
+								try{			
+									var sp_query = "call SP_BRIDGE_TRANSACTION('"+_userWallet+"',"+_orderid+","+RINKEBY_CHAIN_ID+",'"+FROM_TOKEN+"','"+_txnHash+"','"+_amount+"',"+DTH_CHAIN_ID+",'"+TO_TOKEN+"','"+_toTxnHash+"',"+_toAmount+")";									
+									console.log("-----------------------------------------------------------------------------");
+									console.log(">>>>> SP_Query >>>>>",sp_query);
+									console.log("-----------------------------------------------------------------------------");
+									await db_query(sp_query).catch(console.log);
 								}catch(e){
 									console.log(">>>>>Catch >>>>",e);									
 								}																
@@ -314,10 +308,6 @@ async function getEventData_TokenOut(_fromBlock, _toBlock){
 		 		////
 		 }catch(e){	console.log("<<<< Error >>>>",e); }	 	 	 
 }
-
-
-
-
 
 
 
