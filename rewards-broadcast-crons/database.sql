@@ -35,6 +35,10 @@ CREATE TABLE `deployer_data` (
   `transaction_hash` varchar(70) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+
+
+ALTER TABLE `deployer_data` ADD UNIQUE(`transaction_hash`);
+
 --
 -- Dumping data for table `deployer_data`
 --
