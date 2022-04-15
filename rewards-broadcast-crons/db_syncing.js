@@ -40,6 +40,11 @@ const query5 = util.promisify(con5.query).bind(con5);
 
 execute();
 
+// Self kill after 10 mins
+setTimeout(()=>{
+	process.exit(1);
+}, 600000);
+
 
 async function execute(){
 	
