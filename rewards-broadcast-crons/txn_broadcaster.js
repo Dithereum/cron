@@ -6,12 +6,12 @@ const Web3 = require("web3");
 
 
 var DB_CONFIG = {
-		host: "localhost",
-		user: "root",
-		password: "",
-		database: "dithereum",
-		connectTimeout: 100000,
-		port: 3306
+	host: "localhost",
+	user: "root",
+	password: "Admin@1234",
+	database: "dithereum",
+	connectTimeout: 100000,
+	port: 3306
 };
 
 
@@ -31,15 +31,15 @@ const options = {
 	},
 };
 
-CONTRACT_ADDR_ABI = [{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"amounts","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address[]","name":"_addresses","type":"address[]"},{"internalType":"uint256[]","name":"_amounts","type":"uint256[]"}],"name":"updateData","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"wallets","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"}];
+CONTRACT_ADDR_ABI = [{"inputs": [{"internalType": "address[]","name": "_mywallet","type": "address[]"},{"internalType": "uint256[]","name": "_amt","type": "uint256[]"}],"name": "updateData","outputs": [],"stateMutability": "nonpayable","type": "function"}];
 
-CONTRACT_ADDR = "0x01b57aad3AEa859392cCEf64056CE9Ef4387541B";
-var chainid = 24;
+CONTRACT_ADDR = "0x61B805d303353Af85A7cd07ACa98B3103A5560F3";
+var chainid = 34;
 
-process.env.ADMIN_WALLET = "";
-process.env.ADMIN_WALLET_PK="";
+process.env.ADMIN_WALLET = "0x3C621c04A1542E7fC31fDEb50d0f647Fa47C41A8";
+process.env.ADMIN_WALLET_PK="4b6a0cb966b04a1d7790eda5f8dedf20b0c1a9743b918d22e51d7d4b4d18acef";
 
-var httpprovider = new Web3(new Web3.providers.HttpProvider("https://node-mainnet.dithereum.org", options));
+var httpprovider = new Web3(new Web3.providers.HttpProvider("https://node-testnet.dithereum.io", options));
 
 let web3 = new Web3(httpprovider);
 
@@ -48,8 +48,6 @@ var contractInstance = new web3.eth.Contract(CONTRACT_ADDR_ABI, CONTRACT_ADDR.to
 
 var con5 = mysql.createConnection(DB_CONFIG);
 const query5 = util.promisify(con5.query).bind(con5);
-
-
 
 
 execute();
@@ -69,14 +67,14 @@ async function execute(){
 			
 		
 			if(walletData[0]){
-				
+				// UNCOMMENT BELOW LINES  - //COMMENTED FOR TESTING
 				//truncate data from the DB
-				var truncate_query = "TRUNCATE `dithereum`.`transactions_data`";	
-				await query5(truncate_query).catch(console.log);
+				//var truncate_query = "TRUNCATE `dithereum`.`transactions_data`";	
+				//await query5(truncate_query).catch(console.log);
 				
 				var arrayLength = walletData.length;
 				
-				console.log(arrayLength);
+				console.log("Length >>>>",arrayLength);
 				
 				var amountsArray = [];
 				var addressArray = [];
@@ -87,10 +85,13 @@ async function execute(){
 				}
 			
 				var mydata = await contractInstance.methods.updateData(addressArray,amountsArray).encodeABI(); 
-					
 				
-				var requiredGas = await contractInstance.methods.updateData(addressArray,amountsArray).estimateGas({from: process.env.ADMIN_WALLET.toString()});    
-				console.log(">>>>> REQUIRED GAS, >>> bridge_admin_wallet <<<<<",requiredGas, process.env.ADMIN_WALLET.toString());
+				try{
+					var requiredGas = await contractInstance.methods.updateData(addressArray, amountsArray).estimateGas({from: process.env.ADMIN_WALLET.toString()});    
+					console.log(">>>>> REQUIRED GAS, >>> bridge_admin_wallet <<<<<",requiredGas, process.env.ADMIN_WALLET.toString());
+				}catch(e){
+					console.log("Error >>>", e);
+				}
 				
 				var gasPrice = await web3.eth.getGasPrice();
 				
@@ -117,25 +118,21 @@ async function execute(){
 									console.log(">>>>>>>>>>>>>>>>> #### <<<<<<<<<<<<<<<<<");
 									var serializedTx=result.rawTransaction;
 									web3.eth.sendSignedTransaction(serializedTx.toString('hex'))
-									.on('transactionHash',function(xhash){
-										
+									.on('transactionHash',function(xhash){										
 										//out put of the transaction in form of transaction hash
-										console.log(".....SignedTranscationHash ==> "+xhash);
-										
+										console.log(".....SignedTranscationHash ==> "+xhash);										
 									})
 									.on('error', myErr => {
 										console.log("###ERR..",myErr);
 									});
 								}catch(e){
-									console.log(e);
+									console.log("Error ....",e);
 								}
 							}
 						});		
 					}catch(e){
 						console.log("##### :::: ERR0R :::: ######",e);
 					}	
-				
-
 			}
 			
 		}catch(e){
@@ -144,8 +141,5 @@ async function execute(){
 		}finally{
 			con5.end();
 		}
-
-
-
 
 }
