@@ -31,7 +31,8 @@ const options = {
 	},
 };
 
-var httpprovider = new Web3(new Web3.providers.HttpProvider("https://bsc-dataseed.binance.org/", options));
+//var httpprovider = new Web3(new Web3.providers.HttpProvider("https://bsc-dataseed.binance.org/", options));
+var httpprovider = new Web3(new Web3.providers.HttpProvider("https://node-testnet.dithereum.io", options));
 
 let web3 = new Web3(httpprovider);
 
@@ -39,6 +40,11 @@ var con5 = mysql.createConnection(DB_CONFIG);
 const query5 = util.promisify(con5.query).bind(con5);
 
 execute();
+
+// Self kill after 10 mins
+setTimeout(()=>{
+	process.exit(1);
+}, 600000);
 
 
 async function execute(){
