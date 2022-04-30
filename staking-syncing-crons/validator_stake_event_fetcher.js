@@ -14,14 +14,6 @@ var VALIDATOR_CONTRACT_ABI = JSON.parse(JSON.stringify(
     
 let VALIDATOR_CONTRACT_ADDRESS = '0x000000000000000000000000000000000000f000';	  // Dithereum TestNet
 					
-var DB_CONFIG = {
-  		host: '127.0.0.1',
-  		user: 'dithereum',
-  		password: 'Dith#RT.,22',
-  		database: 'VALIDATOR_DB_DUMMY',
-  		connectTimeout: 100000,
-  		port: 3306
-};
 
 const db = mysql('127.0.0.1:3306', 'DBUSER', 'DB_PASSWORD', 'VALIDATOR_DB');
 
