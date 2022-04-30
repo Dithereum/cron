@@ -15,15 +15,15 @@ var VALIDATOR_CONTRACT_ABI = JSON.parse(JSON.stringify(
 let VALIDATOR_CONTRACT_ADDRESS = '0x000000000000000000000000000000000000f000';	  // Dithereum TestNet
 					
 var DB_CONFIG = {
-  		host: process.env.DB_HOST.toString(),
-  		user: process.env.DB_USER.toString(),
-  		password: process.env.DB_PASSWORD.toString(),
-  		database: 'myvalidators',
+  		host: '127.0.0.1',
+  		user: 'dithereum',
+  		password: 'Dith#RT.,22',
+  		database: 'VALIDATOR_DB_DUMMY',
   		connectTimeout: 100000,
-  		port: process.env.DB_PORT
+  		port: 3306
 };
 
-const db = mysql('127.0.0.1:3306', 'root', 'Admin@1234', 'myvalidators');
+const db = mysql('127.0.0.1:3306', 'DBUSER', 'DB_PASSWORD', 'VALIDATOR_DB');
 
 async function setme(){
 	return await db.ready();
@@ -49,9 +49,8 @@ const options = {
     },
 };	 
 
- 
 let web3 = new Web3(new Web3.providers.HttpProvider("https://node-testnet.dithereum.io", options));
-     
+
 
 async function getStakeEvents(){
 	const instance1 = new web3.eth.Contract(VALIDATOR_CONTRACT_ABI, VALIDATOR_CONTRACT_ADDRESS.toString());	 
@@ -63,8 +62,8 @@ async function getStakeEvents(){
 		events.forEach((event)=>{
 			//console.log("<<<<< event >>>>", event);
 			//console.log("staker >>>>", event.returnValues.staker, "val >>>>", event.returnValues.val, "staking >>>>", event.returnValues.staking, "time >>>>", event.returnValues.time, "txhash >>>", event.transactionHash);
-		   var status = ''; 
-		   var amt = '';
+			var status = ''; 
+			var amt = '';
          if(event.event.toString() == 'LogStake'){
 	         status = "Staked";
 	         amt = event.returnValues.staking;
@@ -77,7 +76,7 @@ async function getStakeEvents(){
          var q = new Date();						
 			var mydate = q.getFullYear()+"-"+q.getMonth()+"-"+q.getDay()+" "+q.getHours()+":"+q.getMinutes()+":"+q.getSeconds();
 			var myObj = {
-				"stakerAddress": event.returnValues.staker.toString(), 
+			   "stakerAddress": event.returnValues.staker.toString(), 
 			   "validatorAddress": event.returnValues.val.toString(),
 			   "stakeAmount": amt, 
 			   "timeStamp": event.returnValues.time.toString(), 
@@ -96,6 +95,7 @@ async function getStakeEvents(){
 }
 
 async function myfunction() {
+	console.log(">>>> myfunction executed >>>>");
 	const rows = await db.select('lastblock_fetched', ['lastblock_pair'], "ORDER BY timestamp1 DESC LIMIT 1");	
 	if(typeof process.env.workingBlockPairs == "undefined"){	
 		if(rows.length == 0){			
@@ -119,12 +119,14 @@ async function myfunction() {
 	var z = await getStakeEvents();
 } 
 
+myfunction();
 
-var job = new CronJob('50 * * * * *', function() {  
-	  console.log("@@@@@@>> process.env.workingBlockPairs >>>", process.env.workingBlockPairs);
-	  myfunction();
-}, null, true, 'America/Los_Angeles');
-job.start();
+// Self kill after 10 mins
+setTimeout(()=>{
+   console.log(">>> self kill executed!!! >>>");
+	process.exit(1);
+}, 600000);
+
 
 
 
