@@ -77,7 +77,7 @@ async function getStakeEvents(){
 			   "createdAt": mydate,
 			   "updatedAt": mydate
          };
-		   //console.log(">>>> MYOBJ >>>>", myObj);
+		   console.log(">>>> MYOBJ >>>>", myObj);
 			db.insert('stakings', myObj).then(console.log).catch(console.log);
 		});
 		
